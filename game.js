@@ -358,8 +358,8 @@ function update() {
             }
 
             // 150의 배수마다 Extra Life 획득
-            const extraLifeThreshold = Math.floor(score / 10) * 10; // 현재 점수에서 가장 가까운 150의 배수 (아래쪽)
-            if (extraLifeThreshold >= 10 && extraLifeThreshold > lastExtraLifeScore) {
+            const extraLifeThreshold = Math.floor(score / 100) * 100; // 현재 점수에서 가장 가까운 150의 배수 (아래쪽)
+            if (extraLifeThreshold >= 100 && extraLifeThreshold > lastExtraLifeScore) {
                 lastExtraLifeScore = extraLifeThreshold;
                 extraLife++;
                 if (extraLifeText) {

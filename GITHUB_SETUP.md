@@ -2,7 +2,7 @@
 
 ## 1. GitHub 레포지토리 생성
 
-1. GitHub에 로그인: https://github.com
+1. GitHub에 로그인: <https://github.com>
 2. 우측 상단의 "+" 버튼 클릭 → "New repository" 선택
 3. 레포지토리 설정:
    - **Repository name**: `Eraser-Avoidance` (또는 `EraserAvoidance`)
@@ -38,4 +38,3 @@ git push -u origin main
 
 - 레포지토리: `https://github.com/YOUR_USERNAME/Eraser-Avoidance`
 - 게임 플레이: `https://YOUR_USERNAME.github.io/Eraser-Avoidance/`
-
