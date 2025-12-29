@@ -683,7 +683,7 @@ function collectCoin(birdObj, coinObj) {
     });
 
     // 코인 수집 시 점수 텍스트 효과
-    const coinScoreText = this.add.text(coinObj.x, coinObj.y, '+2', {
+    const coinScoreText = this.add.text(coinObj.x, coinObj.y, '+1', {
         fontSize: '24px',
         fill: '#FFD700',
         fontFamily: 'Arial',
