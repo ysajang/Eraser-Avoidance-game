@@ -26,7 +26,7 @@ const game = new Phaser.Game(config); // Phaser 게임 인스턴스 생성
 // 전역 변수
 let bird, pipes; // 새와 파이프 그룹
 let coins; // 코인 그룹
-let score = 9990, scoreText; // 점수와 점수 텍스트
+let score = 0, scoreText; // 점수와 점수 텍스트
 let highScore = 0, highScoreText; // 최고 점수와 텍스트
 let gameOver = false, gameStarted = false; // 게임 종료/시작 여부
 let pipeSpeed = 200, spawnDelay = 2500, pipeTimer; // 파이프 속도, 생성 지연, 타이머
