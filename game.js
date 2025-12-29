@@ -26,13 +26,13 @@ const game = new Phaser.Game(config); // Phaser 게임 인스턴스 생성
 // 전역 변수
 let bird, pipes; // 새와 파이프 그룹
 let coins; // 코인 그룹
-let score = 0, scoreText; // 점수와 점수 텍스트
+let score = 9990, scoreText; // 점수와 점수 텍스트
 let highScore = 0, highScoreText; // 최고 점수와 텍스트
 let gameOver = false, gameStarted = false; // 게임 종료/시작 여부
 let pipeSpeed = 200, spawnDelay = 2500, pipeTimer; // 파이프 속도, 생성 지연, 타이머
 let gap = 250; // 파이프 사이 간격 (초기값 250, 더 넓게 설정)
 let gamePaused = false; // 일시정지 여부
-let flapSound, scoreSound, hitSound, coinSound, extraSound; // 사운드
+let flapSound, scoreSound, hitSound, coinSound, extraSound, victorySound; // 사운드
 let pauseText = null; // 일시정지 메시지 텍스트
 let lastPipeX = 0; // 마지막으로 생성된 파이프의 x 위치 추적
 let coinScore = 0; // 코인으로 얻은 점수
@@ -89,6 +89,9 @@ function preload() {
     // Extra Life 사운드 로드
     try { this.load.audio('extra', 'assets/Extra.mp3'); }
     catch (e) { }
+    // Victory 사운드 로드
+    try { this.load.audio('victory', 'assets/victory.mp3'); }
+    catch (e) { }
 }
 
 // 게임 생성 로직
@@ -121,6 +124,7 @@ function create() {
     this.input.on('pointerdown', function (pointer) {
         if (!gameStarted) {
             gameStarted = true;
+            gameTitle.destroy();
             startText.destroy();
             if (extraLifeInfo) extraLifeInfo.destroy();
             bird.body.setAllowGravity(true); // 게임 시작 시 중력 활성화
@@ -161,37 +165,51 @@ function create() {
 
 
     // 점수 텍스트
-    scoreText = this.add.text(16, 16, 'Score: 0', {
-        fontSize: '32px', fill: '#fff', fontFamily: 'Arial', stroke: '#000', strokeThickness: 4,
-    });
+    scoreText = this.add.text(280, 12, 'Score : 0', {
+        fontSize: '20px', fill: '#fff', fontFamily: 'Noto Sans KR', stroke: '#000', strokeThickness: 4,
+    }).setDepth(3);
     // 최고 점수 텍스트
-    highScoreText = this.add.text(16, 56, `Best: ${highScore}`, {
-        fontSize: '24px', fill: '#fff', fontFamily: 'Arial', stroke: '#000', strokeThickness: 3,
-    });
+    highScoreText = this.add.text(280, 40, `Best : ${highScore}`, {
+        fontSize: '20px', fill: '#fff', fontFamily: 'Noto Sans KR', stroke: '#000', strokeThickness: 3,
+    }).setDepth(3);
 
     // Extra Life 표시 텍스트
-    extraLifeText = this.add.text(16, 96, 'Extra Life: 0', {
-        fontSize: '20px', fill: '#FFD700', fontFamily: 'Arial', stroke: '#000', strokeThickness: 2,
-    });
+    extraLifeText = this.add.text(280, 68, 'Extra Life : 0', {
+        fontSize: '16px', fill: '#FFD700', fontFamily: 'Noto Sans KR', stroke: '#000', strokeThickness: 3,
+    }).setDepth(3);
 
     // 시작 텍스트
-    const startText = this.add.text(200, 250, 'Click to Start!', {
-        fontSize: '36px', fill: '#fff', fontFamily: 'Arial', stroke: '#000', strokeThickness: 4,
-    }).setOrigin(0.5);
+    const gameTitle = this.add.text(200, 240, 'Eraser Avoidance!', {
+        fontSize: '36px', fill: '#11FF11', fontFamily: 'Noto Sans KR', stroke: '#000', strokeThickness: 4,
+    }).setOrigin(0.5).setDepth(3);
+
+    // 시작 텍스트
+    const startText = this.add.text(200, 320, 'Click to Start!', {
+        fontSize: '36px', fill: '#fff', fontFamily: 'Noto Sans KR', stroke: '#000', strokeThickness: 4,
+    }).setOrigin(0.5).setDepth(3);
 
     // Extra Life 안내 텍스트
-    const extraLifeInfo = this.add.text(200, 320, 'Get Extra Life at 100 points!', {
-        fontSize: '20px', fill: '#FFD700', fontFamily: 'Arial', stroke: '#000', strokeThickness: 2,
-    }).setOrigin(0.5);
+    const extraLifeInfo = this.add.text(200, 380, 'Get Extra Life at 100 points!', {
+        fontSize: '20px', fill: '#FFD700', fontFamily: 'Noto Sans KR', stroke: '#000', strokeThickness: 2,
+    }).setOrigin(0.5).setDepth(3);
 
     // 일시정지 버튼(아이콘)
-    const pauseButtonX = this.cameras.main.width - 40;
+    const pauseButtonX = this.cameras.main.width - 380;
     const pauseButtonY = 30;
     const pauseIcon = this.add.graphics();
+
+    // 흰색 막대 (아이콘)
     pauseIcon.fillStyle(0xFFFFFF, 1)
-        .fillRect(0, 0, 8, 24)
-        .fillRect(12, 0, 8, 24)
-        .setPosition(pauseButtonX, pauseButtonY);
+        .fillRect(0, 0, 10, 30)
+        .fillRect(15, 0, 10, 30);
+
+    // 테두리 추가: 검정색, 두께 3
+    pauseIcon.lineStyle(2, 0x000000, 1)
+        .strokeRect(0, 0, 10, 30)
+        .strokeRect(15, 0, 10, 30);
+
+    pauseIcon.setPosition(pauseButtonX, pauseButtonY);
+    pauseIcon.setDepth(3); // 파이프보다 높은 레이어
 
     // hitArea를 명시적으로 지정 (아이콘 크기: 약 20x24)
     pauseIcon.setInteractive(
@@ -205,8 +223,12 @@ function create() {
     if (this.cache.audio.exists('flap')) flapSound = this.sound.add('flap');
     if (this.cache.audio.exists('score')) scoreSound = this.sound.add('score');
     if (this.cache.audio.exists('hit')) hitSound = this.sound.add('hit');
-    if (this.cache.audio.exists('coin')) coinSound = this.sound.add('coin');
+    if (this.cache.audio.exists('coin')) {
+        coinSound = this.sound.add('coin');
+        coinSound.setVolume(0.6); // 볼륨 60%로 설정
+    }
     if (this.cache.audio.exists('extra')) extraSound = this.sound.add('extra');
+    if (this.cache.audio.exists('victory')) victorySound = this.sound.add('victory');
 
     // 새와 파이프 충돌 처리
     this.physics.add.overlap(bird, pipes, hitPipe, null, this);
@@ -376,6 +398,12 @@ function update() {
                     }
                 });
                 if (extraSound) extraSound.play(); // Extra Life 사운드 재생
+            }
+
+            // 9999점 이상 달성 시 게임 승리
+            if (score >= 9999) {
+                endGame(this);
+                return;
             }
         }
     });
@@ -617,7 +645,7 @@ function collectCoin(birdObj, coinObj) {
 
     coinObj.collected = true;
     coinScore++;
-    score += 2; // 코인당 2점 추가
+    score += 1; // 코인당 1점 추가
     scoreText.setText(`Score: ${score}`);
 
     // Score가 Best와 같거나 높으면 Best도 같이 업데이트
@@ -633,6 +661,12 @@ function collectCoin(birdObj, coinObj) {
     if (score > 0 && score % 50 === 0 && score > lastBackgroundScore) {
         lastBackgroundScore = score;
         changeBackground(this);
+    }
+
+    // 9999점 이상 달성 시 게임 승리
+    if (score >= 9999) {
+        endGame(this);
+        return;
     }
 
     if (coinSound) coinSound.play();
@@ -748,6 +782,56 @@ function showGameOverOverlay(scene) {
     scene.gameOverOverlay = overlay;
 }
 
+// 폭죽 효과 함수
+function createFireworks(scene, x, y) {
+    // 폭죽 색상 배열 (밝고 화려한 색상들)
+    const colors = [0xFF0000, 0x00FF00, 0x0000FF, 0xFFFF00, 0xFF00FF, 0x00FFFF, 0xFFA500, 0xFF1493];
+
+    // 파티클 개수
+    const particleCount = 30;
+
+    // 각 파티클 생성
+    for (let i = 0; i < particleCount; i++) {
+        // 랜덤 색상 선택
+        const color = colors[Math.floor(Math.random() * colors.length)];
+
+        // 파티클 생성 (작은 원형)
+        const particle = scene.add.circle(x, y, 3, color).setDepth(1001);
+
+        // 랜덤 각도와 속도 계산
+        const angle = (Math.PI * 2 * i) / particleCount + (Math.random() - 0.5) * 0.5; // 원형으로 퍼지되 약간의 랜덤성 추가
+        const speed = 200 + Math.random() * 150; // 속도: 200~350
+
+        // 속도 벡터 계산
+        const velocityX = Math.cos(angle) * speed;
+        const velocityY = Math.sin(angle) * speed;
+
+        // 파티클 이동 애니메이션
+        scene.tweens.add({
+            targets: particle,
+            x: x + velocityX * 0.5, // 최종 위치
+            y: y + velocityY * 0.5,
+            alpha: 0,
+            scale: 0,
+            duration: 800 + Math.random() * 400, // 800~1200ms
+            ease: 'Power2',
+            onComplete: () => {
+                if (particle && particle.active) {
+                    particle.destroy();
+                }
+            }
+        });
+
+        // 중력 효과 (아래로 떨어지는 효과)
+        scene.tweens.add({
+            targets: particle,
+            y: y + velocityY * 0.5 + 100, // 추가로 아래로 떨어짐
+            duration: 800 + Math.random() * 400,
+            ease: 'Power2'
+        });
+    }
+}
+
 // 게임 오버 처리 함수
 function endGame(scene) {
     if (gameOver) return; // 중복처리 방지
@@ -773,6 +857,90 @@ function endGame(scene) {
         if (highScoreText) {
             highScoreText.setText(`Best: ${highScore}`);
         }
+    }
+
+    // 9999점 이상 달성 시 승리 처리
+    const isWin = score >= 9999;
+
+    // 승리 시에는 바로 승리 화면 표시
+    if (isWin) {
+        // 게임 오버 오버레이 표시 (어두운 배경)
+        showGameOverOverlay(scene);
+
+        // 파이프와 코인 제거 (점수가 뚜렷하게 보이도록)
+        pipes.children.entries.forEach(pipe => {
+            if (pipe) {
+                pipe.setAlpha(0); // 파이프 숨기기
+            }
+        });
+        coins.children.entries.forEach(coin => {
+            if (coin && !coin.destroyed) {
+                coin.setAlpha(0); // 코인 숨기기
+            }
+        });
+
+        // "You Win!" 문구 표시
+        scene.add.text(200, 250, 'You Win!', {
+            fontSize: '48px', fill: '#FFD700', fontFamily: 'Arial', stroke: '#000', strokeThickness: 4,
+        }).setOrigin(0.5).setDepth(1000);
+
+        // Victory 사운드 재생 (4초까지만)
+        if (victorySound) {
+            victorySound.play();
+            // 4초 후 사운드 중지
+            scene.time.delayedCall(4000, () => {
+                if (victorySound && victorySound.isPlaying) {
+                    victorySound.stop();
+                }
+            });
+        }
+
+        // 폭죽 효과 생성 (여러 위치에서 연속으로 터지게)
+        // 첫 번째 폭죽 (중앙)
+        createFireworks(scene, 200, 250);
+
+        // 약간의 지연 후 추가 폭죽들
+        scene.time.delayedCall(200, () => {
+            createFireworks(scene, 150, 200);
+            createFireworks(scene, 250, 200);
+        });
+
+        scene.time.delayedCall(400, () => {
+            createFireworks(scene, 100, 300);
+            createFireworks(scene, 300, 300);
+        });
+
+        scene.time.delayedCall(600, () => {
+            createFireworks(scene, 200, 150);
+            createFireworks(scene, 200, 350);
+        });
+
+        // 재시작 안내 문구 표시
+        scene.add.text(200, 320, 'Click to Restart', {
+            fontSize: '24px', fill: '#fff', fontFamily: 'Arial', stroke: '#000', strokeThickness: 3,
+        }).setOrigin(0.5).setDepth(1000);
+
+        // 클릭시 재시작 처리 (새로고침처럼 완전히 새로 시작)
+        scene.input.once('pointerdown', function () {
+            // 모든 타이머 정리
+            if (pipeTimer) {
+                pipeTimer.remove();
+                pipeTimer = null;
+            }
+            if (coinTimer) {
+                coinTimer.remove();
+                coinTimer = null;
+            }
+
+            // 모든 사운드 중지
+            if (victorySound && victorySound.isPlaying) {
+                victorySound.stop();
+            }
+
+            // 페이지 새로고침 (완전히 새로 시작)
+            location.reload();
+        });
+        return; // 승리 처리 후 함수 종료
     }
 
     // Extra Life가 있으면 부활 옵션 제공
@@ -893,6 +1061,7 @@ function endGame(scene) {
                     fontSize: '32px', fill: '#FFD700', fontFamily: 'Arial', stroke: '#000', strokeThickness: 3,
                 }).setOrigin(0.5).setDepth(1000);
             }
+            // 게임 오버 텍스트 표시
             scene.add.text(200, 250, 'Game Over!', {
                 fontSize: '48px', fill: '#fff', fontFamily: 'Arial', stroke: '#000', strokeThickness: 4,
             }).setOrigin(0.5).setDepth(1000);
@@ -953,7 +1122,7 @@ function endGame(scene) {
             }
         });
 
-        // "Game Over" 문구 표시
+        // 게임 오버 텍스트 표시
         scene.add.text(200, 250, 'Game Over!', {
             fontSize: '48px', fill: '#fff', fontFamily: 'Arial', stroke: '#000', strokeThickness: 4,
         }).setOrigin(0.5).setDepth(1000);

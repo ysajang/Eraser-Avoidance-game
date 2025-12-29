@@ -6,6 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Avoid the Eraser</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+
+    <!-- Google AdSense -->
+    <!-- TODO: 아래 'ca-pub-XXXXXXXXXXXXXXXX' 부분을 본인의 Google AdSense Publisher ID로 교체하세요 -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7816720598093357" crossorigin="anonymous"></script>
+
     <style>
         body {
             margin: 0;
@@ -14,17 +19,174 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background: #000;
+            background: #fff;
+            /* 흰색 배경 */
         }
 
         canvas {
             display: block;
             margin: 0 auto;
+            background: transparent;
+            /* 캔버스 배경은 투명 (게임 내부 배경 사용) */
+        }
+
+        /* 광고 컨테이너 스타일 */
+        .ad-container {
+            position: fixed;
+            background: #fff;
+            padding: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .ad-top {
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 728px;
+            text-align: center;
+        }
+
+        .ad-side {
+            top: 50%;
+            transform: translateY(-50%);
+            width: 160px;
+            text-align: center;
+        }
+
+        .ad-left {
+            left: 10px;
+        }
+
+        .ad-right {
+            right: 10px;
+        }
+
+        .ad-bottom {
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 728px;
+            text-align: center;
+        }
+
+        /* 모바일에서는 사이드 광고 숨김 */
+        @media (max-width: 768px) {
+            .ad-side {
+                display: none;
+            }
         }
     </style>
 </head>
 
 <body>
+
+    <!-- 좌측 광고 (구글 애드센스) -->
+    <div class="ad-container ad-side ad-left">
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-7816720598093357"
+             data-ad-slot="1526792653"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+        <script>
+            (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+    </div>
+
+    <!-- 우측 광고 (구글 애드센스) -->
+    <div class="ad-container ad-side ad-right">
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-7816720598093357"
+             data-ad-slot="1576103327"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+        <script>
+            (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+    </div>
+
+
+    <!-- 하단 광고 (선택사항) -->
+    <!--
+    <div class="ad-container ad-bottom">
+        <ins class="adsbygoogle"
+            style="display:block"
+            data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+            data-ad-slot="XXXXXXXXXX"
+            data-ad-format="auto"
+            data-full-width-responsive="true"></ins>
+        <script>
+            (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+    </div>
+    -->
+
+    <script>
+        // eraser.png를 45도 회전시켜서 favicon으로 설정
+        function setRotatedFavicon() {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+
+            img.onload = function () {
+                // Canvas 생성 (favicon은 보통 32x32 또는 64x64 크기)
+                const canvas = document.createElement('canvas');
+                const size = 64; // favicon 크기
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+
+                // 배경을 투명하게 설정
+                ctx.clearRect(0, 0, size, size);
+
+                // Canvas 중앙으로 이동
+                ctx.save();
+                ctx.translate(size / 2, size / 2);
+
+
+                // 이미지 비율 유지하면서 favicon 크기에 맞게 조정
+                const scale = Math.min(size / img.width, size / img.height); // 90% 크기로 여유 공간 확보
+                const scaledWidth = img.width * scale;
+                const scaledHeight = img.height * scale;
+
+                // 이미지 그리기 (중앙 정렬)
+                ctx.drawImage(img, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight);
+
+                ctx.restore();
+
+                // Canvas를 data URL로 변환하여 favicon 설정
+                const dataUrl = canvas.toDataURL('image/png');
+                const link = document.createElement('link');
+                link.rel = 'icon';
+                link.type = 'image/png';
+                link.href = dataUrl;
+
+                // 기존 favicon 제거 후 새로 추가
+                const existingLink = document.querySelector("link[rel='icon']");
+                if (existingLink) {
+                    existingLink.remove();
+                }
+                document.head.appendChild(link);
+            };
+
+            img.onerror = function () {
+                // 이미지 로드 실패 시 기본 favicon 설정
+                console.warn('Failed to load eraser.png for favicon');
+            };
+
+            // 이미지 로드 시작
+            img.src = 'assets/eraser.png';
+        }
+
+        // 페이지 로드 시 favicon 설정
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', setRotatedFavicon);
+        } else {
+            setRotatedFavicon();
+        }
+    </script>
     <script src="game.js"></script>
 </body>
 
