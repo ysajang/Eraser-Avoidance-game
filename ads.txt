@@ -1,5 +1,5 @@
 # ads.txt 파일
 # 이 파일은 웹사이트의 광고 인벤토리를 공개적으로 선언하는 파일입니다.
-# Google AdSense Publisher ID: ca-pub-7816720598093357
+# Google AdSense Publisher ID: ca-pub-8134600084295672
 
-google.com, pub-7816720598093357, DIRECT, f08c47fec0942fa0
+google.com, pub-8134600084295672, DIRECT, f08c47fec0942fa0
